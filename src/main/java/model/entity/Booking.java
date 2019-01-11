@@ -11,6 +11,7 @@ public class Booking {
     private String status;
     private Date dateFrom;
     private Date dateTo;
+    private double price;
 
     public int getId() {
         return id;
@@ -68,6 +69,14 @@ public class Booking {
         this.dateTo = dateTo;
     }
 
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -77,6 +86,7 @@ public class Booking {
                 roomId == booking.roomId &&
                 clientId == booking.clientId &&
                 requestId == booking.requestId &&
+                Double.compare(booking.price, price) == 0 &&
                 Objects.equals(status, booking.status) &&
                 Objects.equals(dateFrom, booking.dateFrom) &&
                 Objects.equals(dateTo, booking.dateTo);
@@ -84,7 +94,7 @@ public class Booking {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, roomId, clientId, requestId, status, dateFrom, dateTo);
+        return Objects.hash(id, roomId, clientId, requestId, status, dateFrom, dateTo, price);
     }
 
     @Override
@@ -97,6 +107,7 @@ public class Booking {
                 ", status='" + status + '\'' +
                 ", dateFrom=" + dateFrom +
                 ", dateTo=" + dateTo +
+                ", price=" + price +
                 '}';
     }
 }

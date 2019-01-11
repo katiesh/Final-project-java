@@ -1,5 +1,6 @@
 package model.dao.factory;
 
+import model.entity.Request;
 import model.entity.Room;
 import org.apache.log4j.Logger;
 
@@ -42,7 +43,7 @@ public class RoomDAO extends AbstractDAO<Room> {
     @Override
     public Room findEntityById(int id) {
         try(Statement statement = connection.createStatement()){
-            ResultSet result = statement.executeQuery(SELECT_ALL_ROOMS+"where id=" + id);
+            ResultSet result = statement.executeQuery(SELECT_ALL_ROOMS+" where id=" + id);
             return parseSet(result).get(0);
         }catch (SQLException e){
             logger.error("Error statement rooms by id");
@@ -75,105 +76,65 @@ public class RoomDAO extends AbstractDAO<Room> {
         return false;
     }
 
-    private String setFindQueryByNotSuitableIds(List<Integer> roomsId){
-        StringBuilder newSQLStatement = new StringBuilder(10);
+    private String setFindQueryByNotSuitableIds(String roomsId){
+        String newSQLStatement;
         if(roomsId!=null){
-            newSQLStatement.append(SELECT_ALL_ROOMS + " WHERE id <> " + roomsId.get(0));
+            newSQLStatement = SELECT_ALL_ROOMS + " where id NOT IN " + roomsId;
         }
-        for (int i = 1; i < roomsId.size(); i++) {
-            newSQLStatement.append("AND id <> " + roomsId.get(i));
-
-            }
-        return newSQLStatement.toString();
+        else {
+            newSQLStatement = SELECT_ALL_ROOMS;
+        }
+        return newSQLStatement;
     }
-    public List<Room> findByNotSuitableIds(List<Integer> roomsId){
-        String query = setFindQueryByNotSuitableIds(roomsId);
-        if(query!=null){
-            try(Statement statement = connection.createStatement()){
-                ResultSet result = statement.executeQuery(query);
-               return parseSet(result);
-            }catch (SQLException e){
+
+    public List<Room> findByNotSuitableIdsFromTo(String roomsId, int from, int to){
+        try(PreparedStatement statement = connection.prepareStatement(
+                setFindQueryByNotSuitableIds(roomsId) +" LIMIT ?,?")){
+            statement.setInt(1,from);
+            statement.setInt(2,to);
+            return parseSet(statement.executeQuery());
+        }catch (SQLException e){
                 logger.error("Error rooms by not suitable id");
             }
-        }
         return null;
     }
 
-    public List<Room> findByClassAndNotSuitableIds(String classOfRooms, List<Integer> roomsId){
-        String query = setFindQueryByNotSuitableIds(roomsId) + "AND classOfRooms = " + classOfRooms;
-        if(query!=null){
-            try(Statement statement = connection.createStatement()){
-                ResultSet result = statement.executeQuery(query);
-                return parseSet(result);
-            }catch (SQLException e){
-                logger.error("Error rooms by not suitable id and classOfRoom");
-            }
+    public List<Room> findByAllRequestParameterFromTo(Request request, String roomsId, int from, int to){
+        String notInRoomsIds = new String();
+        if(roomsId!=null) {
+            notInRoomsIds = " and id not in " + roomsId;
         }
-        return null;
-    }
-
-    public List<Room> findByNumOfPlacesAndNotSuitableIds(int numOfPlaces, List<Integer> roomsId){
-        String query = setFindQueryByNotSuitableIds(roomsId) + "AND numOfPlaces = " + numOfPlaces;
-        if(query!=null){
-            try(Statement statement = connection.createStatement()){
-                ResultSet result = statement.executeQuery(query);
-                return parseSet(result);
-            }catch (SQLException e){
-                logger.error("Error rooms by not suitable id and number of places");
-            }
-        }
-        return null;
-    }
-
-    public List<Room> findByClassAndNumOfPlacesAndNotSuitableIds(String classOfRooms,
-                                                                 List<Integer> roomsId,
-                                                                 int numOfPlaces){
-        String query = setFindQueryByNotSuitableIds(roomsId) + "AND classOfRooms = " + classOfRooms
-                + "AND numOfPlaces = " + numOfPlaces;
-        if(query!=null){
-            try(Statement statement = connection.createStatement()){
-                ResultSet result = statement.executeQuery(query);
-                return parseSet(result);
-            }catch (SQLException e){
-                logger.error("Error rooms by not suitable id and classOfRoom and numOfPlaces");
-            }
-        }
-        return null;
-    }
-
-    public List<Room> findByClassAndNumOfPlaces(String classOfRoom, int numOfPlaces){
-        try(Statement statement = connection.createStatement()){
-            ResultSet resultSet = statement.executeQuery(SELECT_ALL_ROOMS + "where numOfPlaces = "
-                    + numOfPlaces +
-                    "AND classOfRoom = " + classOfRoom);
-            return parseSet(resultSet);
-
-        } catch (SQLException e) {
-            logger.error("Error statement rooms by class and number of places");
-        }
-        return null;
-    }
-
-    public List<Room> findByClass (String classOfRoom){
-        try(Statement statement = connection.createStatement()){
-            ResultSet resultSet = statement.executeQuery(SELECT_ALL_ROOMS +
-                    " classOfRoom = " + classOfRoom);
-            return parseSet(resultSet);
+        try(PreparedStatement statement = connection.prepareStatement(
+                SELECT_ALL_ROOMS +" where numOfPlaces = ? " + notInRoomsIds +
+                        " and classOfRoom = ? LIMIT ?,?")){
+            statement.setInt(1,request.getNumOfPlaces());
+            statement.setString(2,request.getClassOfRoom());
+            statement.setInt(3,from);
+            statement.setInt(4,to);
+            return parseSet(statement.executeQuery());
         }catch (SQLException e){
-            logger.error("Error statement rooms by class of rooms");
+            logger.error("Error rooms by not suitable id, numOfPlaces and classOfRoom");
         }
         return null;
     }
 
-    public List<Room> findByNumOfPlaces (int numOfPlaces){
-        try(Statement statement = connection.createStatement()){
-            ResultSet resultSet = statement.executeQuery(SELECT_ALL_ROOMS +
-                    " numOfPlaces = " + numOfPlaces);
-            return parseSet(resultSet);
-        }catch (SQLException e){
-            logger.error("Error statement rooms by number of places");
+    public int getNumOfRowsByAllRequestParameter(Request request, String roomsId){
+        String notInRoomsIds = new String();
+        if(roomsId!=null){
+            notInRoomsIds = " and id not in " + roomsId;
         }
-        return null;
+        try(PreparedStatement statement = connection.prepareStatement("SELECT COUNT(id)" +
+                "  AS count FROM finalproject.rooms WHERE numOfPlaces = ?" +
+                notInRoomsIds + " and classOfRoom = ?;")){
+            statement.setInt(1, request.getNumOfPlaces());
+            statement.setString(2, request.getClassOfRoom());
+            ResultSet result = statement.executeQuery();
+            if(result.next())
+                return  result.getInt("count");
+        }catch (SQLException e){
+            logger.error("Error statement rooms num of rows");
+        }
+        return 0;
     }
 
     public int getNumOfRows(){

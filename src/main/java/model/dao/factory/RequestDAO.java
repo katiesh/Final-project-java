@@ -75,6 +75,18 @@ public class RequestDAO extends AbstractDAO<Request> {
         return 0;
     }
 
+    public int getNumOfRowsForNewRequests(){
+        try(Statement statement = connection.createStatement()){
+            ResultSet result = statement.executeQuery("SELECT COUNT(id) AS count FROM finalproject.requests" +
+                    " WHERE status = \"waiting to be processed\"");
+            if(result.next())
+                return  result.getInt("count");
+        }catch (SQLException e){
+            logger.error("Error statement requests num of rows for new requests");
+        }
+        return 0;
+    }
+
     @Override
     public Request findEntityById(int id) {
         try(Statement statement = connection.createStatement()){
@@ -107,6 +119,7 @@ public class RequestDAO extends AbstractDAO<Request> {
             statement.setInt(4,entity.getClientId());
             statement.setInt(5, entity.getNumOfPlaces());
             statement.execute();
+            return true;
         }catch (SQLException e){
             logger.error("PreparedStatement requests create");
         }
@@ -137,13 +150,24 @@ public class RequestDAO extends AbstractDAO<Request> {
     }
 
     public List<Request> findRequestsFromToById(int from, int to, int clientId){
-        try(PreparedStatement statement = connection.prepareStatement(SELECT_ALL_REQUESTS +" WHERE clientId = ? LIMIT ?,?")){
+        try(PreparedStatement statement = connection.prepareStatement(SELECT_ALL_REQUESTS +" WHERE clientId = ? ORDER BY id DESC LIMIT ?,?")){
             statement.setInt(1,clientId);
             statement.setInt(2,from);
             statement.setInt(3,to);
             return parseSet(statement.executeQuery());
         }catch(SQLException e){
             logger.error("Error prepared statement requests find from to");
+        }
+        return null;
+    }
+
+    public List<Request> findNewRequestsFromTo(int from, int to){
+        try(PreparedStatement statement = connection.prepareStatement(SELECT_ALL_REQUESTS +" WHERE status = \"waiting to be processed\" ORDER BY id DESC LIMIT ?,?")){
+            statement.setInt(1,from);
+            statement.setInt(2,to);
+            return parseSet(statement.executeQuery());
+        }catch(SQLException e){
+            logger.error("Error prepared statement requests find new from to");
         }
         return null;
     }

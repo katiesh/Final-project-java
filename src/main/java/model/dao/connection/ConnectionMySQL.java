@@ -16,10 +16,9 @@ public class ConnectionMySQL {
         if(dataSource == null){
             synchronized (ConnectionMySQL.class){
                 if(dataSource == null){
-                    try {
-                        Class.forName("com.mysql.jdbc.Driver");
                     BasicDataSource ds = new BasicDataSource();
                     ResourceBundle resource = ResourceBundle.getBundle("database");
+                    ds.setDriverClassName(resource.getString("driver"));
                     ds.setUrl(resource.getString("url"));
                     ds.setUsername(resource.getString("user"));
                     ds.setPassword(resource.getString("password"));
@@ -27,9 +26,6 @@ public class ConnectionMySQL {
                     ds.setMaxIdle(Integer.valueOf(resource.getString("max")));
                     ds.setMaxOpenPreparedStatements(Integer.valueOf(resource.getString("statements")));
                     dataSource = ds;
-                    } catch (ClassNotFoundException e) {
-                        logger.error("Error connection MySQL");
-                    }
                 }
             }
         }
@@ -40,6 +36,7 @@ public class ConnectionMySQL {
         try {
             return getDataSource().getConnection();
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }

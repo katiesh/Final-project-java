@@ -26,6 +26,7 @@ public class BookingDAO extends AbstractDAO<Booking> {
             newBooking.setRoomId(resultSet.getInt(2));
             newBooking.setRequestId(resultSet.getInt(6));
             newBooking.setStatus(resultSet.getString(7));
+            newBooking.setPrice(resultSet.getDouble(8));
             bookings.add(newBooking);
         }
         return bookings;
@@ -82,12 +83,13 @@ public class BookingDAO extends AbstractDAO<Booking> {
     @Override
     public boolean create(Booking entity) {
         try(PreparedStatement statement = connection.prepareStatement("INSERT INTO finalproject.bookings " +
-                "(roomId, dateFrom, dateTo, clientId, requestId) VALUES (?,?,?,?,?)")){
+                "(roomId, dateFrom, dateTo, clientId, requestId, price) VALUES (?,?,?,?,?,?)")){
             statement.setInt(1,entity.getRoomId());
             statement.setDate(2,entity.getDateFrom());
             statement.setDate(3, entity.getDateTo());
             statement.setInt(4,entity.getClientId());
             statement.setInt(5, entity.getRequestId());
+            statement.setDouble(6, entity.getPrice());
             statement.execute();
             return true;
         }catch (SQLException e){
@@ -98,9 +100,16 @@ public class BookingDAO extends AbstractDAO<Booking> {
 
     public List<Integer> findRoomsIdByDate(Date dateFrom, Date dateTo){
         List<Integer> roomsId = new ArrayList<>();
-        try(Statement statement = connection.createStatement()){
-            ResultSet result = statement.executeQuery( SELECT_ALL_BOOKINGS + " where (dateFrom < " + dateFrom +
-                    "OR dateFrom > " + dateTo + ") AND (dateTo < " + dateFrom + "OR dateTo > " + dateTo);
+//        try(Statement statement = connection.createStatement()){
+//            ResultSet result = statement.executeQuery( SELECT_ALL_BOOKINGS + " where (dateFrom > " + dateFrom +
+//                    " OR dateFrom <= " + dateTo + ") AND (dateTo >= " + dateFrom + " OR dateTo >= " + dateTo);
+           try(PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_BOOKINGS + " where (dateFrom >= ? OR dateFrom < " +
+                   "?) AND (dateTo > ? OR dateTo >= ?)")){
+               preparedStatement.setDate(1, dateFrom);
+               preparedStatement.setDate(2, dateTo);
+               preparedStatement.setDate(3,dateFrom);
+               preparedStatement.setDate(4,dateTo);
+               ResultSet result = preparedStatement.executeQuery();
             while(result.next()){
                 roomsId.add(result.getInt(2));
             }
@@ -110,8 +119,22 @@ public class BookingDAO extends AbstractDAO<Booking> {
         return roomsId;
     }
 
+//    public List<Integer> findRoomsIdsByRequestId(int requestId){
+//        List<Integer> roomsId = new ArrayList<>();
+//        try(PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_BOOKINGS + " where requestId = ?")){
+//            preparedStatement.setInt(1, requestId);
+//            ResultSet result = preparedStatement.executeQuery();
+//            while(result.next()){
+//                roomsId.add(result.getInt(2));
+//            }
+//        }catch(SQLException e){
+//            logger.error("Statement booking by date");
+//        }
+//        return roomsId;
+//    }
+
     public List<Booking> findBookingsByStatus(String status){
-        try(PreparedStatement statement = connection.prepareStatement(SELECT_ALL_BOOKINGS + "WHERE status = ?")){
+        try(PreparedStatement statement = connection.prepareStatement(SELECT_ALL_BOOKINGS + " WHERE status = ?")){
             statement.setString(7,status);
             ResultSet result = statement.executeQuery();
             return parseSet(result);
@@ -123,9 +146,9 @@ public class BookingDAO extends AbstractDAO<Booking> {
 
     public boolean updateStatus(Booking booking,String status){
         try (PreparedStatement statement = connection.prepareStatement("UPDATE finalproject.bookings SET status = ? " +
-                "WHERE  id =  ")){
-            statement.setString(7,status);
-            statement.setInt(1,booking.getId());
+                "WHERE  id = ?")){
+            statement.setString(1,status);
+            statement.setInt(2,booking.getId());
             statement.executeUpdate();
             return true;
         }catch (SQLException e){
@@ -146,7 +169,7 @@ public class BookingDAO extends AbstractDAO<Booking> {
     }
 
     public List<Booking> findFromTo(int from, int to){
-        try(PreparedStatement statement = connection.prepareStatement(SELECT_ALL_BOOKINGS +" LIMIT ?,?")){
+        try(PreparedStatement statement = connection.prepareStatement(SELECT_ALL_BOOKINGS +" ORDER BY id DESC LIMIT ?,?")){
             statement.setInt(1,from);
             statement.setInt(2,to);
             return parseSet(statement.executeQuery());
@@ -155,4 +178,5 @@ public class BookingDAO extends AbstractDAO<Booking> {
         }
         return null;
     }
+
 }

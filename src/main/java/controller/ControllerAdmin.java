@@ -12,9 +12,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-
-@WebServlet(name="Controller", urlPatterns = {"/home"})
-public class Controller extends HttpServlet {
+@WebServlet(name="Admin", urlPatterns = {"/admin"})
+public class ControllerAdmin extends HttpServlet {
     final static Logger logger = Logger.getLogger(Controller.class);
     @Override
     public void doPost(HttpServletRequest servletRequest, HttpServletResponse servletResponse) throws ServletException, IOException {
@@ -26,11 +25,6 @@ public class Controller extends HttpServlet {
         performTask(servletRequest,servletResponse);
     }
 
-//    @Override
-//    public void destroy(){
-//        super.destroy();
-//    }
-
     private void performTask(HttpServletRequest servletRequest, HttpServletResponse servletResponse) throws ServletException, IOException {
         try {
             ICommand command = FactoryCommand.createCommand(servletRequest);
@@ -41,5 +35,4 @@ public class Controller extends HttpServlet {
                     .forward(servletRequest,servletResponse);
         }
     }
-
 }

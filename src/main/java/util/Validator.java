@@ -1,7 +1,6 @@
 package util;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Validator {
@@ -46,11 +45,14 @@ public class Validator {
         return (price > 1 && price < 1000000);
     }
 
-    public static Date isCorrectDate(String date){
+    public static Date isCorrectDate(String strDate){
         try {
-            Date date1 = new SimpleDateFormat("dd.mm.yyyy").parse(date);
-            if(date1.compareTo(new Date()) >= 0){
-                return date1;
+            Date date = Parser.parseDateFromStringToUtil(strDate);
+            //???????? ? ??????????? ????????? ?????
+            long oneYear = 365*24*60*60*1000L;
+            Date maxDate = new Date(new Date().getTime() + oneYear);
+            if(date.compareTo(new Date()) >= 0 && date.compareTo(maxDate)<0){
+                return date;
             } else{
                 return null;
             }
@@ -59,12 +61,14 @@ public class Validator {
         }
     }
 
-    public static Date isCorrectDate(String dateFrom, String dateTo){
+    public static Date isCorrectDate(String strDateFrom, String strDateTo){
         try {
-            Date date = new SimpleDateFormat("dd.mm.yyyy").parse(dateFrom);
-            Date date2 = new SimpleDateFormat("dd.mm.yyyy").parse(dateTo);
-            if(date2.after(date)){
-            return date2;
+            Date dateFrom = Parser.parseDateFromStringToUtil(strDateFrom);
+            Date dateTo = Parser.parseDateFromStringToUtil(strDateTo);
+            long oneYear = 365*24*60*60*1000L;
+            Date maxDate = new Date(new Date().getTime() + oneYear);
+            if(dateTo.after(dateFrom) && dateTo.compareTo(maxDate)<0){
+            return dateTo;
             } else{
                 return null;
             }
