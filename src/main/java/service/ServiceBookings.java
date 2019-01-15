@@ -1,44 +1,64 @@
 package service;
 
-import model.dao.factory.BookingDAO;
 import model.dao.factory.FactoryDao;
+import model.dao.factory.implementation.BookingDAO;
+import model.entity.Booking;
+import util.constants.TypesDAO;
 
-import javax.servlet.http.HttpServletRequest;
 import java.sql.Date;
 import java.util.List;
 
-public class ServiceBookings extends Service {
+/**
+ * provides services for bookings
+ * @author Kateryna Shkulova
+ */
+public class ServiceBookings {
+    /**
+     * field dao
+     */
     private BookingDAO dao;
 
+    /**
+     * constructor without parameters
+     */
     public ServiceBookings() {
-        dao = (BookingDAO) FactoryDao.createDAO("booking");
+        dao = (BookingDAO) FactoryDao.getDAO(TypesDAO.BOOKING);
     }
 
-    public List<Integer> getByDate(Date from, Date to){
+    /**
+     * gets bookings for current page
+     * @param currentPage is the current page
+     * @param recordsPerPage is the number of records per page
+     * @return found list of bookings
+     */
+    public List<Booking> findBookingsForCurrentPage(int currentPage, int recordsPerPage){
+        return dao.findWithOffsetFromPosition((currentPage - 1) * recordsPerPage, recordsPerPage);
+    }
+
+    /**
+     * gets ids of booked rooms by dates from and to
+     * @param from is a date from
+     * @param to is a date to
+     * @return
+     */
+    public List<Integer> getRoomsIdsByDate(Date from, Date to){
         return dao.findRoomsIdByDate(from, to);
     }
 
-//    public boolean create(Booking booking){
-//        return dao.create(booking);
-//    }
-
-    public void findBookingsForCurrentPage(int currentPage, int recordsPerPage, HttpServletRequest servletRequest){
-        servletRequest.setAttribute("bookings", getEntitiesForCurrentPage(dao,currentPage,recordsPerPage));
+    /**
+     * gets number of rows
+     * return number of rows
+     */
+    public int getNumOfRows(){
+        return dao.getNumOfRows();
     }
 
-    public void bookingsPagination(HttpServletRequest servletRequest){
-        setCurrentPageRecordsPerPage(servletRequest);
-        setNumOfPages(getNumOfRows(dao), servletRequest);
-        findBookingsForCurrentPage((Integer)(servletRequest.getAttribute("currentPage"))
-                ,(Integer)(servletRequest.getAttribute("recordsPerPage")), servletRequest);
+    /**
+     * gets booking by request id
+     * @param requestId is the request id
+     * @return found booking {@link BookingDAO#findByRequestId(int)}
+     */
+    public Booking findByRequestId(int requestId){
+        return dao.findByRequestId(requestId);
     }
-
-    @Override
-    public void closeConnections() {
-        dao.close();
-    }
-
-//    public List<Booking> getBookingFromTo(int from, int to){
-//        return getEntitiesFromTo(dao, from,to);
-//    }
 }

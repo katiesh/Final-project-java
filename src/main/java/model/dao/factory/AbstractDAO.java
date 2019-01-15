@@ -1,33 +1,72 @@
 package model.dao.factory;
 
 import model.dao.connection.ConnectionMySQL;
-import org.apache.log4j.Logger;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Abstract class provides general methods for tables from database
+ * @param <T> entity
+ * @author Kateryna Shkulova
+ */
 public abstract class AbstractDAO <T> {
-    final static Logger logger = Logger.getLogger(AbstractDAO.class);
-//    final static Logger logger = (Logger) Logger.getLogger(String.valueOf(AbstractDAO.class));
+    /**
+     * field connection to database
+     */
     protected Connection connection;
+
+    /**
+     * constructor without parameters
+     * sets connection as {@link ConnectionMySQL#getConnection()}
+     */
     public AbstractDAO(){
          connection = new ConnectionMySQL().getConnection();
     }
-    public void close() {
-        try {
-            connection.close();
-        } catch (SQLException e) {
-            logger.error("Error close connection");
-        }
-    }
-    public abstract List<T> findAll();
-    public abstract T findEntityById(int id);
-    public abstract boolean delete(int id);
-    public abstract boolean create(T entity);
-    public abstract int getNumOfRows();
-    public abstract List<T> findFromTo(int from, int to);
-//    public abstract boolean delete (T entity);
-//    public abstract T update(T entity);
 
+    public AbstractDAO(Connection connection){
+        this.connection = connection;
+    }
+
+    public Connection getConnection(){
+        return connection;
+    }
+
+    /**
+     * gets entity from database by its id
+     * @param id id of the entity
+     * @return found entity
+     */
+    public abstract T findEntityById(int id);
+
+    /**
+     * adds the entity to database
+     * @param entity entity which have to be added
+     * @return true if the entity is added to database
+     * @return false if the entity is not added to database
+     */
+    public abstract boolean create(T entity) throws SQLException;
+
+    /**
+     * gets number of all rows in table from database
+     * @return
+     */
+    public abstract int getNumOfRows();
+
+    /**
+     * gets defined number of entities from defined position from table
+     * @param from is the start position(row)
+     * @param amount is the number of entities to get
+     * @return list of found entities
+     */
+    public abstract List<T> findWithOffsetFromPosition(int from, int amount);
+    /**
+     * parse ResultSet to the list of entities
+     * @param resultSet result set of the query
+     * @return list of entities
+     * @throws SQLException
+     */
+    protected abstract List<T> parseSet(ResultSet resultSet) throws SQLException;
 }

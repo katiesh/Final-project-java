@@ -8,10 +8,24 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ResourceBundle;
 
+/**
+ * Provides connection with MySQL database
+ * @author Kateryna Shkulova
+ */
 public class ConnectionMySQL {
+    /**
+     * field logger
+     */
     final static Logger logger = Logger.getLogger(ConnectionMySQL.class);
+    /**
+     * field data source
+     */
     private static volatile DataSource dataSource;
 
+    /**
+     * sets the data source
+     * @return datasourse {@link #dataSource}
+     */
     private static DataSource getDataSource() {
         if(dataSource == null){
             synchronized (ConnectionMySQL.class){
@@ -32,6 +46,11 @@ public class ConnectionMySQL {
         return dataSource;
     }
 
+    /**
+     * returns connection to database
+     * @return connection
+     * @throws RuntimeException if it's impossible to get a connection
+     */
     public Connection getConnection(){
         try {
             return getDataSource().getConnection();

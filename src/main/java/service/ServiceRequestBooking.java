@@ -1,70 +1,59 @@
 package service;
 
-import model.dao.factory.BookingDAO;
 import model.dao.factory.FactoryDao;
-import model.dao.factory.RequestDAO;
+import model.dao.factory.implementation.BookingDAO;
+import model.dao.factory.implementation.RequestDAO;
 import model.entity.Booking;
 import model.entity.Request;
-import util.ForwardPagesPaths;
+import util.Validator;
+import util.constants.TypesDAO;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.sql.Date;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.sql.SQLException;
 
-public class ServiceRequestBooking extends Service{
+/**
+ * provides services with requests and bookings
+ * @author Kateryna Shkulova
+ */
+public class ServiceRequestBooking {
+    /**
+     * field requestDAO
+     */
     private RequestDAO requestDAO;
+    /**
+     * field bookingDAO
+     */
     private BookingDAO bookingDAO;
 
+    /**
+     * constructor without parameters
+     */
     public ServiceRequestBooking() {
-        requestDAO = (RequestDAO) FactoryDao.createDAO("request");
-        bookingDAO = (BookingDAO) FactoryDao.createDAO("booking");
+        bookingDAO = (BookingDAO) FactoryDao.getDAO(TypesDAO.BOOKING);
+        requestDAO = new RequestDAO(bookingDAO.getConnection());
     }
 
-    public void requestsBookingsPagination(HttpServletRequest servletRequest, int clientId){
-        setCurrentPageRecordsPerPage(servletRequest);
-        setNumOfPages(getNumOfRowsByClientId(clientId), servletRequest);
-        findRequestsBookingsForCurrentPage((Integer)(servletRequest.getAttribute("currentPage"))
-                ,(Integer)(servletRequest.getAttribute("recordsPerPage")), servletRequest, clientId );
-    }
 
-    private void findRequestsBookingsForCurrentPage(Integer currentPage, Integer recordsPerPage, HttpServletRequest servletRequest, int clientId) {
-        List<Request> requestList = findRequestsFromToById(currentPage,
-                recordsPerPage, clientId);
-        List<Booking> bookings = new ArrayList<>();
-        for (Iterator<Request> iterator = requestList.iterator(); iterator.hasNext();) {
-            Request requestItem = iterator.next();
-            if (requestItem.getStatus().equals("processed")) {
-                bookings.add(findByRequestId(requestItem.getId()));
-                iterator.remove();
-            }
-        }
-        servletRequest.setAttribute("requests", requestList);
-        servletRequest.setAttribute("bookings", bookings);
-
-    }
-
-    public Booking findByRequestId(int requestId){
-        return bookingDAO.findByRequestId(requestId);
-    }
-
-    private List<Request> findRequestsFromToById(int currentPage, int recordsPerPage, int clientId){
-        return requestDAO.findRequestsFromToById((currentPage-1)*recordsPerPage,recordsPerPage,clientId);
-    }
-
-    private int getNumOfRowsByClientId(int clientId){
-        return requestDAO.getNumOfRowsByClientId(clientId);
-    }
-
-    public Request getRequestById(int id){
+    /**
+     * get the request by its id
+     * @param id is the id of request
+     * @return found request
+     */
+    private Request getRequestById(int id){
         return requestDAO.findEntityById(id);
     }
 
-    public boolean create(int roomId, Request requestItem, double roomPrice){
+    /**
+     * add the booking to database
+     * <p>
+     *     sets the booking with parameters from servlet request
+     * </p>
+     * @param roomId is the room id
+     * @param requestItem is the request
+     * @param roomPrice is the price of the room
+     * @return the result of creation booking in datav=base
+     */
+    private boolean createBooking(int roomId, Request requestItem, double roomPrice) throws SQLException {
         Booking booking = new Booking();
         booking.setRoomId(roomId);
         booking.setRequestId(requestItem.getId());
@@ -75,31 +64,54 @@ public class ServiceRequestBooking extends Service{
         return bookingDAO.create(booking);
     }
 
+    /**
+     * calculate the price for booking
+     * @param dateFrom date from
+     * @param dateTo date to
+     * @param pricePreDay price per day
+     * @return calculated price
+     */
     private double calculatePrice(Date dateFrom, Date dateTo, double pricePreDay){
         int days = (int)(dateTo.getTime()-dateFrom.getTime())/(1000*60*60*24);
         return days*pricePreDay;
     }
 
-    private void changeStatus(Request request){
+    /**
+     * change the request status to processed
+     * @param request is the request which status should be changed
+     */
+    private void changeRequestStatusToProcessed(Request request) throws SQLException {
         requestDAO.updateStatus(request);
     }
 
-    public void createBookingAndChangeRequestStatus(HttpServletRequest servletRequest, HttpServletResponse servletResponse) throws ServletException, IOException {
-        int requestId = Integer.valueOf(servletRequest.getParameter("requestId"));
-        int roomId = Integer.valueOf(servletRequest.getParameter("roomId"));
-        double roomPrice = Double.valueOf(servletRequest.getParameter("roomPrice"));
-        Request requestItem = getRequestById(requestId);
-        if(create(roomId,requestItem, roomPrice)) {
-            changeStatus(requestItem);
-            forwardToPage(ForwardPagesPaths.BOOKING_IS_CREATED.toString(), servletRequest, servletResponse);
-        }else{
-            forwardToPage(ForwardPagesPaths.DATA_NOT_SENT.toString(), servletRequest, servletResponse);
+    /**
+     * create booking and change the status of request for which the booking was created
+     * @param strRequestId is string with request id
+     * @param strRoomId is string with room id
+     * @param strRoomPrice is string with room price
+     * @return true if booking is created and status is changed
+     */
+    public boolean createBookingAndChangeRequestStatus(String strRequestId, String strRoomId, String strRoomPrice) throws SQLException {
+        if(Validator.isCorrectInt(strRequestId) && Validator.isCorrectInt(strRoomId) &&
+        Validator.isCorrectDouble(strRoomPrice)){
+            int requestId = Integer.valueOf(strRequestId);
+            int roomId = Integer.valueOf(strRoomId);
+            double roomPrice = Double.valueOf(strRoomPrice);
+            Request requestItem = getRequestById(requestId);
+            if(createBooking(roomId,requestItem, roomPrice)) {
+                try{
+                    changeRequestStatusToProcessed(requestItem);
+                    bookingDAO.connCommit();
+                    return true;
+                }catch (SQLException e){
+                    bookingDAO.rollback();
+                    return false;
+                }
+                finally {
+                    bookingDAO.setAutoCommitTrue();
+                }
+            }
         }
-    }
-
-    @Override
-    public void closeConnections() {
-        requestDAO.close();
-        bookingDAO.close();
+        return false;
     }
 }

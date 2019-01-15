@@ -1,50 +1,73 @@
 package service;
 
 import model.dao.factory.FactoryDao;
-import model.dao.factory.RoomDAO;
+import model.dao.factory.implementation.RoomDAO;
+import model.entity.Request;
 import model.entity.Room;
+import util.Parser;
+import util.constants.TypesDAO;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.List;
 
-public class ServiceRoom extends Service {
+/**
+ * provides services with bookings and rooms
+ * @author Kateryna Shkulova
+ */
+public class ServiceRoom{
+    /**
+     * field room dao
+     */
     private RoomDAO dao;
 
-    public ServiceRoom() {
-        dao = (RoomDAO) FactoryDao.createDAO("room");
+    /**
+     * constructor without parameters
+     */
+    public ServiceRoom(){
+        dao = (RoomDAO)FactoryDao.getDAO(TypesDAO.ROOM);
     }
 
-    public List<Room> getAllRooms(){
-        return dao.findAll();
+    /**
+     * gets the number of rows without rooms which are not available
+     * @param roomsIds is the list of ids of rooms which are not available
+     * @return number of rows
+     */
+    public int getNumOfRowsWithoutNotAvailableRooms(List <Integer> roomsIds){
+        return dao.getNumOfRows() - roomsIds.size();
     }
 
-    public int getNumOfRows(){
-        return dao.getNumOfRows();
+    /**
+     * gets number of rows which match request and are available
+     * @param requestItem is the request for which rooms are finding
+     * @param roomsIds is the list of ids of rooms which are not available
+     * @return number of found rows
+     */
+    public int getNumOfRowsByAllRequiredParams(Request requestItem, List <Integer> roomsIds){
+        return dao.getNumOfRowsByRequestParameters(requestItem,
+                Parser.convertListToString(roomsIds));
     }
 
-    public void findRoomsForCurrentPage(int currentPage, int recordsPerPage, HttpServletRequest servletRequest){
-        servletRequest.setAttribute("rooms", getEntitiesForCurrentPage(dao,currentPage,recordsPerPage));
-        //return dao.findFromTo((currentPage-1)*recordsPerPage,recordsPerPage);
+    /**
+     * gets available rooms for the page
+     * @param currentPage is the current page
+     * @param recordsPerPage records  per page
+     * @param roomsIds is the list of ids of rooms which are not available
+     */
+    public List<Room> findRoomsByNotSuitbleIdsForCurrentPage(int currentPage, int recordsPerPage,
+                                                              List <Integer> roomsIds){
+        return dao.findByNotSuitableIdsFromPositionWithOffset(Parser.convertListToString(roomsIds),
+                (currentPage-1)*recordsPerPage,recordsPerPage);
     }
 
-    public void roomsPagination(HttpServletRequest servletRequest){
-        setCurrentPageRecordsPerPage(servletRequest);
-        setNumOfPages(getNumOfRows(dao), servletRequest);
-        findRoomsForCurrentPage((Integer)(servletRequest.getAttribute("currentPage"))
-                ,(Integer)(servletRequest.getAttribute("recordsPerPage")), servletRequest);
-    }
-
-    public List<Room> getByIds(List<Integer> ids){
-        List<Room> rooms = new ArrayList<>();
-        for (Integer id: ids) {
-            rooms.add(dao.findEntityById(id));
-        }
-        return rooms;
-    }
-
-    @Override
-    public void closeConnections() {
-        dao.close();
+    /**
+     * gets rooms that are matching request parameters and are available
+     * @param currentPage is the current page
+     * @param recordsPerPage is the number of records per page
+     * @param requestItem is the request for which rooms are found
+     * @param roomsIds is the list of ids of rooms which are not available
+     */
+    public List<Room> findRoomsByRequestParametersForCurrentPage(int currentPage, int recordsPerPage,
+                                                            Request requestItem, List<Integer> roomsIds){
+        return dao.findByRequestParametersFromPositionWithOffset(requestItem,Parser.convertListToString
+                        (roomsIds), (currentPage-1)*recordsPerPage,recordsPerPage);
     }
 }
