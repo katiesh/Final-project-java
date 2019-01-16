@@ -33,8 +33,7 @@ public class RoomDAO extends AbstractDAO<Room> {
     /**
      * {@inheritDoc}
      */
-    @Override
-    protected List<Room> parseSet(ResultSet resultSet) throws SQLException {
+    private List<Room> parseSet(ResultSet resultSet) throws SQLException {
         List<Room> rooms = new ArrayList<>();
         while (resultSet.next()){
             Room newRoom = new Room();
@@ -54,7 +53,10 @@ public class RoomDAO extends AbstractDAO<Room> {
     public Room findEntityById(int id) {
         try(Statement statement = connection.createStatement()){
             ResultSet result = statement.executeQuery(SELECT_ALL_ROOMS+" where id=" + id);
-            return parseSet(result).get(0);
+            List<Room> rooms = parseSet(result);
+            if(!rooms.isEmpty()){
+                return rooms.get(0);
+            }
         }catch (SQLException e){
             logger.error("Error statement rooms by id");
         }
@@ -66,11 +68,11 @@ public class RoomDAO extends AbstractDAO<Room> {
      */
     @Override
     public boolean create(Room entity) {
-        try(PreparedStatement statement = connection.prepareStatement("INSERT INTO finalproject.bookings " +
+        try(PreparedStatement statement = connection.prepareStatement("INSERT INTO finalproject.rooms " +
                 "(numOfPlaces, classOfRoom, price) VALUES (?,?,?)")){
-            statement.setInt(2,entity.getNumOfPlaces());
-            statement.setString(3, entity.getClassOfRoom());
-            statement.setDouble(4, entity.getPrice());
+            statement.setInt(1,entity.getNumOfPlaces());
+            statement.setString(2, entity.getClassOfRoom());
+            statement.setDouble(3, entity.getPrice());
             statement.execute();
         }catch (SQLException e){
             logger.error("Statement bookings createBooking");
@@ -198,6 +200,28 @@ public class RoomDAO extends AbstractDAO<Room> {
             logger.error("Error prepared statement rooms find from to");
         }
         return null;
+    }
+
+
+    public List<Room> getAll(){
+        try(Statement statement = connection.createStatement()){
+            ResultSet result = statement.executeQuery(SELECT_ALL_ROOMS);
+            return parseSet(result);
+        }catch (SQLException e){
+            logger.error("Error statement rooms get all");
+            return null;
+        }
+    }
+
+    public boolean delete(Room room) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE from finalproject.rooms where id = ?")) {
+            preparedStatement.setInt(1, room.getId());
+            preparedStatement.execute();
+            return true;
+        } catch (SQLException e) {
+            logger.error("Error rooms statement delete");
+            return false;
+        }
     }
 //
 //    @Override

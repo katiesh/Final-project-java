@@ -20,7 +20,7 @@ public class RequestDAO extends AbstractDAO<Request> {
     /**
      * field select all requests is an sql request which select all from table
      */
-    private static final String SELECT_ALL_REQUESTS = "SELECT* FROM finalproject.requests";
+    private static final String SELECT_ALL_REQUESTS = "SELECT* FROM finalproject.requests ";
 
     /**
      * constructor without parameters
@@ -39,8 +39,8 @@ public class RequestDAO extends AbstractDAO<Request> {
     /**
      * {@inheritDoc}
      */
-    @Override
-    protected List<Request> parseSet(ResultSet resultSet) throws SQLException {
+    private
+    List<Request> parseSet(ResultSet resultSet) throws SQLException {
         List<Request> requests = new ArrayList<>();
         while (resultSet.next()){
             Request newRequest = new Request();
@@ -125,7 +125,9 @@ public class RequestDAO extends AbstractDAO<Request> {
     public Request findEntityById(int id) {
         try(Statement statement = connection.createStatement()){
             ResultSet result = statement.executeQuery(SELECT_ALL_REQUESTS+" where id = " + id);
-            return parseSet(result).get(0);
+            List<Request> requests = parseSet(result);
+            if(!requests.isEmpty())
+            return requests.get(0);
         }catch (SQLException e){
             logger.error("Error statement requests by id");
         }
@@ -202,7 +204,7 @@ public class RequestDAO extends AbstractDAO<Request> {
      * @param clientId is client's id
      * @return list of found requests{@link Request}
      */
-    public List<Request> findRequestsWithOffsetFromPositionById(int position, int offset, int clientId){
+    public List<Request> findRequestsWithOffsetFromPositionByClientId(int position, int offset, int clientId){
         try(PreparedStatement statement = connection.prepareStatement(SELECT_ALL_REQUESTS +" WHERE clientId = ? ORDER BY id DESC LIMIT ?,?")){
             statement.setInt(1,clientId);
             statement.setInt(2, position);
@@ -228,5 +230,26 @@ public class RequestDAO extends AbstractDAO<Request> {
             logger.error("Error prepared statement requests find new from to");
         }
         return null;
+    }
+
+    public List<Request> getAll(){
+        try(Statement statement = connection.createStatement()){
+            ResultSet result = statement.executeQuery(SELECT_ALL_REQUESTS);
+            return parseSet(result);
+        }catch (SQLException e){
+            logger.error("Error statement requests get all");
+            return null;
+        }
+    }
+
+    public boolean delete(Request request) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("DELETE from finalproject.requests where id = ?")) {
+            preparedStatement.setInt(1, request.getId());
+            preparedStatement.execute();
+            return true;
+        } catch (SQLException e) {
+            logger.error("Error requests statement delete");
+            return false;
+        }
     }
 }

@@ -2,7 +2,7 @@ package controller.command.implementation;
 
 import controller.command.Command;
 import model.entity.Booking;
-import service.ServiceBookings;
+import service.BookingService;
 import util.constants.ForwardPagesPaths;
 
 import javax.servlet.ServletException;
@@ -20,13 +20,13 @@ public class AllBookings extends Command {
     /**
      * field service bookings
      */
-    private ServiceBookings serviceBookings;
+    BookingService bookingService;
 
     /**
      * constructor without parameters
      */
     public AllBookings() {
-        serviceBookings = new ServiceBookings();
+        bookingService = new BookingService();
     }
 
     /**
@@ -36,8 +36,8 @@ public class AllBookings extends Command {
     public void execute(HttpServletRequest servletRequest, HttpServletResponse servletResponse) throws ServletException, IOException {
         if(servletRequest.isUserInRole("admin")){
             setCurrentPageRecordsPerPage(servletRequest);
-            setNumOfPages(serviceBookings.getNumOfRows(), servletRequest);
-            List<Booking> bookingsForPage = serviceBookings.findBookingsForCurrentPage((Integer) servletRequest.getAttribute("currentPage"),
+            setNumOfPages(bookingService.getNumOfRows(), servletRequest);
+            List<Booking> bookingsForPage = bookingService.findBookingsForCurrentPage((Integer) servletRequest.getAttribute("currentPage"),
                     (Integer) servletRequest.getAttribute("recordsPerPage"));
             if(bookingsForPage.isEmpty()){
                 servletRequest.setAttribute("nothingFound", "true");

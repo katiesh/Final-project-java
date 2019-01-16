@@ -121,7 +121,7 @@ public class Request {
     }
 
     /**
-     * {@inheritDoc}
+     *{@inheritDoc}
      */
     @Override
     public boolean equals(Object o) {
@@ -136,24 +136,32 @@ public class Request {
                 Objects.equals(dateTo, request.dateTo) &&
                 Objects.equals(status, request.status);
     }
-
     /**
-     * {@inheritDoc}
-     * @return
+     *{@inheritDoc}
      */
     @Override
     public int hashCode() {
         return Objects.hash(id, clientId, numOfPlaces, classOfRoom, dateFrom, dateTo, status);
     }
 
+    /**
+     * sets status
+     * @param status {@link #status}
+     */
     public void setStatus(String status) {
         this.status = status;
     }
 
+    /**
+     * @return id {@link #id}
+     */
     public int getId() {
         return id;
     }
 
+    /**
+     * @return class of room {@link #classOfRoom}
+     */
     public String getClassOfRoom() {
         return classOfRoom;
     }

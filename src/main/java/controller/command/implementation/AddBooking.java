@@ -2,7 +2,7 @@ package controller.command.implementation;
 
 import controller.command.Command;
 import org.apache.log4j.Logger;
-import service.ServiceRequestBooking;
+import service.RequestBookingService;
 import util.constants.ForwardPagesPaths;
 
 import javax.servlet.ServletException;
@@ -19,17 +19,17 @@ public class AddBooking extends Command {
     /**
      * logger field
      */
-    Logger logger = Logger.getLogger(AddBooking.class);
+    private static final Logger logger = Logger.getLogger(AddBooking.class);
     /**
      * field service request and booking
      */
-    private ServiceRequestBooking serviceRequestBooking;
+    RequestBookingService requestBookingService;
 
     /**
      * constructor without parameters
      */
     public AddBooking() {
-        serviceRequestBooking = new ServiceRequestBooking();
+        requestBookingService = new RequestBookingService();
     }
 
     /**
@@ -42,7 +42,7 @@ public class AddBooking extends Command {
             String roomId = servletRequest.getParameter("roomId");
             String roomPrice = servletRequest.getParameter("roomPrice");
             try {
-                if(serviceRequestBooking.createBookingAndChangeRequestStatus(requestId, roomId, roomPrice)){
+                if(requestBookingService.createBookingAndChangeRequestStatus(requestId, roomId, roomPrice)){
                     servletRequest.getRequestDispatcher(ForwardPagesPaths
                             .BOOKING_IS_CREATED.toString()).forward(servletRequest, servletResponse);
                 }else{

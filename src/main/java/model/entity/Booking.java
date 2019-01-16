@@ -174,7 +174,6 @@ public class Booking {
                 clientId == booking.clientId &&
                 requestId == booking.requestId &&
                 Double.compare(booking.price, price) == 0 &&
-                Objects.equals(status, booking.status) &&
                 Objects.equals(dateFrom, booking.dateFrom) &&
                 Objects.equals(dateTo, booking.dateTo);
     }

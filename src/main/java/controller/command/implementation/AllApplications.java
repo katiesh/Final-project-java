@@ -2,7 +2,7 @@ package controller.command.implementation;
 
 import controller.command.Command;
 import model.entity.Request;
-import service.ServiceRequest;
+import service.RequestService;
 import util.constants.ForwardPagesPaths;
 
 import javax.servlet.ServletException;
@@ -19,13 +19,13 @@ public class AllApplications extends Command {
     /**
      * field service request
      */
-    private ServiceRequest serviceRequest;
+    RequestService requestService;
 
     /**
      * constructor without parameters
      */
     public AllApplications() {
-        serviceRequest = new ServiceRequest();
+        requestService = new RequestService();
     }
 
     /**
@@ -42,12 +42,12 @@ public class AllApplications extends Command {
             String checkBoxValue = servletRequest.getParameter("new_appl");
             setCurrentPageRecordsPerPage(servletRequest);
             if (checkBoxValue!=null && checkBoxValue.equals("true")){
-                setNumOfPages(serviceRequest.getNumOfRowsForNewRequests(), servletRequest);
-                requestsForPage = serviceRequest.findNewRequestsForCurrentPage((Integer) (servletRequest.getAttribute("currentPage"))
+                setNumOfPages(requestService.getNumOfRowsForNewRequests(), servletRequest);
+                requestsForPage = requestService.findNewRequestsForCurrentPage((Integer) (servletRequest.getAttribute("currentPage"))
                         , (Integer) (servletRequest.getAttribute("recordsPerPage")));
             }else{
-                setNumOfPages(serviceRequest.getNumOfRows(), servletRequest);
-                requestsForPage = serviceRequest.findAllRequestsForCurrentPage((Integer) (servletRequest.getAttribute("currentPage"))
+                setNumOfPages(requestService.getNumOfRows(), servletRequest);
+                requestsForPage = requestService.findAllRequestsForCurrentPage((Integer) (servletRequest.getAttribute("currentPage"))
                         , (Integer) (servletRequest.getAttribute("recordsPerPage")));
             }
             if(requestsForPage!=null) {

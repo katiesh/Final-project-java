@@ -1,7 +1,7 @@
 package controller.command.implementation;
 
 import controller.command.Command;
-import service.ServiceRequest;
+import service.RequestService;
 import util.constants.ForwardPagesPaths;
 
 import javax.servlet.ServletException;
@@ -16,13 +16,13 @@ public class FormClientRoom extends Command {
     /**
      * field service request
      */
-    private ServiceRequest serviceRequest;
+    RequestService requestService;
 
     /**
      * constructor without parameters
      */
     public FormClientRoom() {
-        serviceRequest = new ServiceRequest();
+        requestService = new RequestService();
     }
 
     /**
@@ -36,8 +36,8 @@ public class FormClientRoom extends Command {
             String dateFrom = servletRequest.getParameter("dateFrom");
             String dateTo = servletRequest.getParameter("dateTo");
             Object clientId = servletRequest.getSession().getAttribute("clientId");
-            if(serviceRequest.validateRequestForm(classOfRoom, numOfPlaces, dateFrom, dateTo, clientId)) {
-                if(serviceRequest.create(classOfRoom, numOfPlaces, dateFrom, dateTo, clientId)) {
+            if(requestService.validateRequestForm(classOfRoom, numOfPlaces, dateFrom, dateTo, clientId)) {
+                if(requestService.create(classOfRoom, numOfPlaces, dateFrom, dateTo, clientId)) {
                     servletRequest.getRequestDispatcher(ForwardPagesPaths
                             .THANKS_PAGE.toString()).forward(servletRequest, servletResponse);
                 }else{
@@ -49,6 +49,9 @@ public class FormClientRoom extends Command {
                 servletRequest.getRequestDispatcher(ForwardPagesPaths
                         .FORM_CLIENT_ROOM.toString()).forward(servletRequest, servletResponse);
             }
+        }else{
+            servletRequest.getRequestDispatcher(ForwardPagesPaths
+                    .DATA_NOT_SENT.toString()).forward(servletRequest, servletResponse);
         }
     }
 }

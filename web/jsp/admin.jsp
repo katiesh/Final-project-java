@@ -133,6 +133,7 @@
               </tr>      
             </tbody>
           </table>
+        <c:if test="${requestItem.status ne 'processed'}">
           <div class="form-group row">
                 <div class="col-sm-12">
                     <div class="text-right">
@@ -140,6 +141,7 @@
                 </div>
               </div>
               </div>
+        </c:if>
     </c:forEach>
          <!--End-->     
          <nav aria-label="Page navigation example">

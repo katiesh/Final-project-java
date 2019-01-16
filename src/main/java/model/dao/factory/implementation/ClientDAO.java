@@ -20,7 +20,7 @@ public class ClientDAO extends AbstractDAO<Client> {
     /**
      * field select all clients is a SQL request which select all from table
      */
-    private static final String SELECT_ALL_CLIENTS = "SELECT* FROM clients";
+    private static final String SELECT_ALL_CLIENTS = "SELECT* FROM clients ";
 
     /**
      * constructor without parameters
@@ -32,8 +32,7 @@ public class ClientDAO extends AbstractDAO<Client> {
     /**
      *{@inheritDoc}
      */
-    @Override
-    protected List<Client> parseSet(ResultSet resultSet) throws SQLException {
+    private List<Client> parseSet(ResultSet resultSet) throws SQLException {
         List<Client> clients = new ArrayList<>();
         while (resultSet.next()){
             Client newClient = new Client();
@@ -103,6 +102,13 @@ public class ClientDAO extends AbstractDAO<Client> {
      */
     @Override
     public List<Client> findWithOffsetFromPosition(int from, int amount) {
+        try(PreparedStatement statement = connection.prepareStatement(SELECT_ALL_CLIENTS +" LIMIT ?,?")){
+            statement.setInt(1,from);
+            statement.setInt(2, amount);
+            return parseSet(statement.executeQuery());
+        }catch(SQLException e){
+            logger.error("Error prepared statement clients find from to");
+        }
         return null;
     }
 
@@ -146,6 +152,27 @@ public class ClientDAO extends AbstractDAO<Client> {
             }
         }
         return null;
+    }
+
+    public List<Client> getAll(){
+        try(Statement statement = connection.createStatement()){
+            ResultSet result = statement.executeQuery(SELECT_ALL_CLIENTS);
+            return parseSet(result);
+        }catch (SQLException e){
+            logger.error("Error statement clients get all");
+            return null;
+        }
+    }
+
+    public boolean delete(Client client){
+        try(PreparedStatement preparedStatement = connection.prepareStatement("DELETE from finalproject.clients where id = ?")){
+            preparedStatement.setInt(1, client.getId());
+            preparedStatement.execute();
+            return true;
+        } catch (SQLException e) {
+            logger.error("Error clients statement delete");
+            return false;
+        }
     }
 
 }

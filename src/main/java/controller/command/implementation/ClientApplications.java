@@ -4,9 +4,9 @@ import controller.command.Command;
 import model.entity.Booking;
 import model.entity.Client;
 import model.entity.Request;
-import service.ServiceBookings;
-import service.ServiceClient;
-import service.ServiceRequest;
+import service.BookingService;
+import service.ClientService;
+import service.RequestService;
 import util.constants.ForwardPagesPaths;
 
 import javax.servlet.ServletException;
@@ -25,22 +25,22 @@ public class ClientApplications extends Command {
     /**
      * field service client
      */
-    private ServiceClient serviceClient;
+    ClientService clientService;
     /**
      * field service request
      */
-    private ServiceRequest serviceRequest;
+    RequestService requestService;
     /**
      * field service bookings
      */
-    private ServiceBookings serviceBookings;
+    BookingService bookingService;
     /**
      * constructor without parameters
      */
     public ClientApplications() {
-        serviceClient = new ServiceClient();
-        serviceRequest = new ServiceRequest();
-        serviceBookings = new ServiceBookings();
+        clientService = new ClientService();
+        requestService = new RequestService();
+        bookingService = new BookingService();
     }
 
     /**
@@ -48,18 +48,18 @@ public class ClientApplications extends Command {
      */
     @Override
     public void execute(HttpServletRequest servletRequest, HttpServletResponse servletResponse) throws ServletException, IOException {
-            Client client = serviceClient.getClientByEmailOrTel(servletRequest.getParameter("clientData"));
+            Client client = clientService.getClientByEmailOrTel(servletRequest.getParameter("clientData"));
             if(client!=null){
                 setCurrentPageRecordsPerPage(servletRequest);
                 int currentPage = (Integer) servletRequest.getAttribute("currentPage");
                 int recordsPerPage = (Integer) servletRequest.getAttribute("recordsPerPage");
-                setNumOfPages(serviceRequest.getNumOfRowsByClientId(client.getId()), servletRequest);
-                List<Request> requestForPage = serviceRequest.findRequestsForPageById(currentPage, recordsPerPage,client.getId());
+                setNumOfPages(requestService.getNumOfRowsByClientId(client.getId()), servletRequest);
+                List<Request> requestForPage = requestService.findRequestsForPageByClientId(currentPage, recordsPerPage,client.getId());
                 List<Booking> bookingsForPage = new ArrayList<>();
                 for (Iterator<Request> iterator = requestForPage.iterator(); iterator.hasNext();) {
                     Request requestItem = iterator.next();
                     if (requestItem.getStatus().equals("processed")) {
-                        bookingsForPage.add(serviceBookings.findByRequestId(requestItem.getId()));
+                        bookingsForPage.add(bookingService.findByRequestId(requestItem.getId()));
                         iterator.remove();
                     }
                 }

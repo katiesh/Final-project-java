@@ -32,8 +32,7 @@ public class BookingDAO extends AbstractDAO<Booking> {
     /**
      * {@inheritDoc}
      */
-    @Override
-    protected List<Booking> parseSet(ResultSet resultSet) throws SQLException {
+    private List<Booking> parseSet(ResultSet resultSet) throws SQLException {
         List<Booking> bookings = new ArrayList<>();
         while (resultSet.next()){
             Booking newBooking = new Booking();
@@ -59,7 +58,7 @@ public class BookingDAO extends AbstractDAO<Booking> {
         try(Statement statement = connection.createStatement()){
             ResultSet result = statement.executeQuery(SELECT_ALL_BOOKINGS+" where id=" + id);
             List<Booking> bookings = parseSet(result);
-            if(bookings!=null)
+            if(!bookings.isEmpty())
             return bookings.get(0);
         }catch (SQLException e){
             logger.error("Error statement bookings by id");
@@ -118,8 +117,8 @@ public class BookingDAO extends AbstractDAO<Booking> {
 //        try(Statement statement = connection.createStatement()){
 //            ResultSet result = statement.executeQuery( SELECT_ALL_BOOKINGS + " where (dateFrom > " + dateFrom +
 //                    " OR dateFrom <= " + dateTo + ") AND (dateTo >= " + dateFrom + " OR dateTo >= " + dateTo);
-           try(PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_BOOKINGS + " where (dateFrom >= ? OR dateFrom < " +
-                   "?) AND (dateTo > ? OR dateTo >= ?)")){
+           try(PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_BOOKINGS + " where (dateFrom >= ? and dateFrom < " +
+                   "?) OR (dateTo < ? AND dateTo > ?)")){
                preparedStatement.setDate(1, dateFrom);
                preparedStatement.setDate(2, dateTo);
                preparedStatement.setDate(3,dateFrom);
@@ -193,7 +192,7 @@ public class BookingDAO extends AbstractDAO<Booking> {
      */
     @Override
     public List<Booking> findWithOffsetFromPosition(int from, int amount){
-        try(PreparedStatement statement = connection.prepareStatement(SELECT_ALL_BOOKINGS +" ORDER BY id DESC LIMIT ?,?")){
+        try(PreparedStatement statement = connection.prepareStatement(SELECT_ALL_BOOKINGS +" ORDER BY id DESC LIMIT ?, ?")){
             statement.setInt(1,from);
             statement.setInt(2, amount);
             return parseSet(statement.executeQuery());
@@ -211,6 +210,27 @@ public class BookingDAO extends AbstractDAO<Booking> {
     }
     public void rollback() throws SQLException {
         connection.rollback();
+    }
+
+    public List<Booking> getAll(){
+        try(Statement statement = connection.createStatement()){
+            ResultSet result = statement.executeQuery(SELECT_ALL_BOOKINGS);
+            return parseSet(result);
+        }catch (SQLException e){
+            logger.error("Error statement booking get all");
+            return null;
+        }
+    }
+
+    public boolean delete(Booking booking){
+        try(PreparedStatement preparedStatement = connection.prepareStatement("DELETE from finalproject.bookings where id = ?")){
+            preparedStatement.setInt(1, booking.getId());
+            preparedStatement.execute();
+            return true;
+        } catch (SQLException e) {
+            logger.error("Error bookings statement delete");
+            return false;
+        }
     }
 
 
